@@ -33,13 +33,18 @@ fun SettingsScreen(
     var showResetDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
     ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = 680.dp)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
         // Section: Motion Controls
         SettingsSection(title = "MOTION & TILT CONTROLS") {
             // Toggle Motion Controls
@@ -265,6 +270,7 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
 
     if (showResetDialog) {
         AlertDialog(

@@ -43,12 +43,15 @@ fun CalcSnakeApp(
     var currentTab by remember { mutableStateOf(AppTab.CALCULATOR) }
     val settings by settingsManager.settings.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Adaptive orientation: when entering Snake game on a phone, default to landscape;
+    // on all other screens allow free rotation and responsive adaptation.
     LaunchedEffect(currentTab) {
         val activity = context as? android.app.Activity
         if (currentTab == AppTab.SNAKE) {
             activity?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         } else {
-            activity?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            activity?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
 
@@ -57,53 +60,162 @@ fun CalcSnakeApp(
         currentTab = AppTab.CALCULATOR
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = DeepCharcoal,
-        topBar = {
-            if (currentTab != AppTab.SNAKE) {
-                CalcSnakeTopBar(
-                    currentTab = currentTab,
-                    onTabSelected = { currentTab = it }
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val isWideScreen = maxWidth >= 720.dp
+
+        if (currentTab == AppTab.SNAKE) {
+            // Full Screen Snake Game Mode
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding()
+            ) {
+                SnakeScreen(
+                    viewModel = snakeViewModel,
+                    settings = settings,
+                    onNavigateToCalculator = { currentTab = AppTab.CALCULATOR },
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-        },
-        bottomBar = {
-            if (currentTab != AppTab.SNAKE) {
-                CalcSnakeBottomNav(
-                    currentTab = currentTab,
-                    onTabSelected = { currentTab = it }
-                )
+        } else if (isWideScreen) {
+            // Tablet / Foldable Expanded / Wide Screen: NavigationRail on side
+            Row(modifier = Modifier.fillMaxSize().background(DeepCharcoal)) {
+                NavigationRail(
+                    containerColor = DarkGrey,
+                    contentColor = Color.White,
+                    header = {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(PrimaryYellow),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "∑",
+                                    color = DeepCharcoal,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxHeight()
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    AppTab.values().forEach { tab ->
+                        val isSelected = currentTab == tab
+                        NavigationRailItem(
+                            selected = isSelected,
+                            onClick = { currentTab = tab },
+                            icon = {
+                                Icon(
+                                    imageVector = tab.icon,
+                                    contentDescription = tab.title,
+                                    tint = if (isSelected) DeepCharcoal else LightGrey
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = tab.title,
+                                    color = if (isSelected) PrimaryYellow else LightGrey,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 11.sp
+                                )
+                            },
+                            colors = NavigationRailItemDefaults.colors(
+                                indicatorColor = PrimaryYellow
+                            ),
+                            modifier = Modifier.testTag("nav_tab_${tab.name.lowercase()}")
+                        )
+                    }
+                }
+
+                // Main Content Pane
+                Scaffold(
+                    modifier = Modifier.weight(1f),
+                    containerColor = DeepCharcoal,
+                    topBar = {
+                        CalcSnakeTopBar(
+                            currentTab = currentTab,
+                            onTabSelected = { currentTab = it }
+                        )
+                    }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .widthIn(max = 960.dp)
+                        ) {
+                            when (currentTab) {
+                                AppTab.CALCULATOR -> {
+                                    CalculatorScreen(
+                                        viewModel = calculatorViewModel,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                                AppTab.SETTINGS -> {
+                                    SettingsScreen(
+                                        settingsManager = settingsManager,
+                                        settings = settings,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
+                }
             }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(if (currentTab == AppTab.SNAKE) PaddingValues(0.dp) else innerPadding)
-                .then(if (currentTab == AppTab.SNAKE) Modifier.safeDrawingPadding() else Modifier)
-        ) {
-            when (currentTab) {
-                AppTab.CALCULATOR -> {
-                    CalculatorScreen(
-                        viewModel = calculatorViewModel,
-                        modifier = Modifier.fillMaxSize()
+        } else {
+            // Standard Mobile Screen (Portrait / Compact): Top Bar + Bottom Navigation
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = DeepCharcoal,
+                topBar = {
+                    CalcSnakeTopBar(
+                        currentTab = currentTab,
+                        onTabSelected = { currentTab = it }
+                    )
+                },
+                bottomBar = {
+                    CalcSnakeBottomNav(
+                        currentTab = currentTab,
+                        onTabSelected = { currentTab = it }
                     )
                 }
-                AppTab.SNAKE -> {
-                    SnakeScreen(
-                        viewModel = snakeViewModel,
-                        settings = settings,
-                        onNavigateToCalculator = { currentTab = AppTab.CALCULATOR },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                AppTab.SETTINGS -> {
-                    SettingsScreen(
-                        settingsManager = settingsManager,
-                        settings = settings,
-                        modifier = Modifier.fillMaxSize()
-                    )
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    when (currentTab) {
+                        AppTab.CALCULATOR -> {
+                            CalculatorScreen(
+                                viewModel = calculatorViewModel,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        AppTab.SETTINGS -> {
+                            SettingsScreen(
+                                settingsManager = settingsManager,
+                                settings = settings,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        else -> {}
+                    }
                 }
             }
         }
@@ -124,7 +236,7 @@ private fun CalcSnakeTopBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 6.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -138,15 +250,15 @@ private fun CalcSnakeTopBar(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(9.dp))
                             .background(PrimaryYellow),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "∑",
                             color = DeepCharcoal,
-                            fontSize = 20.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Black
                         )
                     }
@@ -156,13 +268,13 @@ private fun CalcSnakeTopBar(
                             Text(
                                 text = "Calc",
                                 color = Color.White,
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Black
                             )
                             Text(
                                 text = "Snake",
                                 color = PrimaryYellow,
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Black
                             )
                         }

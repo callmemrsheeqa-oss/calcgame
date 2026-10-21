@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
@@ -33,57 +34,78 @@ fun CalculatorKeypad(
     onMemoryRecall: () -> Unit,
     onMemoryAdd: () -> Unit,
     onMemorySubtract: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isWide: Boolean = false,
+    customButtonHeight: Dp? = null
 ) {
     var mode by remember { mutableStateOf(KeypadMode.BASIC) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // Mode Selector Tab Row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(DarkGrey)
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            ModeTabButton(
-                title = "Standard",
-                isSelected = mode == KeypadMode.BASIC,
-                onClick = { mode = KeypadMode.BASIC },
-                modifier = Modifier.weight(1f).testTag("tab_standard")
-            )
-            ModeTabButton(
-                title = "Scientific (fx)",
-                isSelected = mode == KeypadMode.SCIENTIFIC,
-                onClick = { mode = KeypadMode.SCIENTIFIC },
-                modifier = Modifier.weight(1f).testTag("tab_scientific")
-            )
-        }
-
-        if (mode == KeypadMode.BASIC) {
-            BasicKeypadGrid(
-                onAppend = onAppend,
-                onDelete = onDelete,
-                onClear = onClear,
-                onToggleSign = onToggleSign,
-                onEquals = onEquals
-            )
-        } else {
-            ScientificKeypadGrid(
+        if (isWide) {
+            // Wide Screen / Tablet / Landscape: All-in-one comprehensive layout
+            WideKeypadGrid(
                 onAppend = onAppend,
                 onAppendFunction = onAppendFunction,
                 onDelete = onDelete,
                 onClear = onClear,
+                onToggleSign = onToggleSign,
                 onEquals = onEquals,
                 onMemoryClear = onMemoryClear,
                 onMemoryRecall = onMemoryRecall,
                 onMemoryAdd = onMemoryAdd,
-                onMemorySubtract = onMemorySubtract
+                onMemorySubtract = onMemorySubtract,
+                buttonHeight = customButtonHeight ?: 42.dp
             )
+        } else {
+            // Compact / Portrait Screen: Tab Switcher + Adaptive Grid
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(DarkGrey)
+                    .padding(3.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                ModeTabButton(
+                    title = "Standard",
+                    isSelected = mode == KeypadMode.BASIC,
+                    onClick = { mode = KeypadMode.BASIC },
+                    modifier = Modifier.weight(1f).testTag("tab_standard")
+                )
+                ModeTabButton(
+                    title = "Scientific (fx)",
+                    isSelected = mode == KeypadMode.SCIENTIFIC,
+                    onClick = { mode = KeypadMode.SCIENTIFIC },
+                    modifier = Modifier.weight(1f).testTag("tab_scientific")
+                )
+            }
+
+            if (mode == KeypadMode.BASIC) {
+                BasicKeypadGrid(
+                    onAppend = onAppend,
+                    onDelete = onDelete,
+                    onClear = onClear,
+                    onToggleSign = onToggleSign,
+                    onEquals = onEquals,
+                    buttonHeight = customButtonHeight ?: 46.dp
+                )
+            } else {
+                ScientificKeypadGrid(
+                    onAppend = onAppend,
+                    onAppendFunction = onAppendFunction,
+                    onDelete = onDelete,
+                    onClear = onClear,
+                    onEquals = onEquals,
+                    onMemoryClear = onMemoryClear,
+                    onMemoryRecall = onMemoryRecall,
+                    onMemoryAdd = onMemoryAdd,
+                    onMemorySubtract = onMemorySubtract,
+                    buttonHeight = customButtonHeight ?: 36.dp
+                )
+            }
         }
     }
 }
@@ -100,13 +122,13 @@ private fun ModeTabButton(
             .clip(RoundedCornerShape(8.dp))
             .background(if (isSelected) PrimaryYellow else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = title,
             color = if (isSelected) DeepCharcoal else LightGrey,
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
         )
     }
@@ -118,9 +140,9 @@ private fun BasicKeypadGrid(
     onDelete: () -> Unit,
     onClear: () -> Unit,
     onToggleSign: () -> Unit,
-    onEquals: () -> Unit
+    onEquals: () -> Unit,
+    buttonHeight: Dp
 ) {
-    val bHeight = 44.dp
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxWidth()
@@ -130,10 +152,10 @@ private fun BasicKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "(", onClick = { onAppend("(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = ")", onClick = { onAppend(")") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "%", onClick = { onAppend("%") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "^", onClick = { onAppend("^") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = bHeight)
+            CalcButton(text = "(", onClick = { onAppend("(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = ")", onClick = { onAppend(")") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "%", onClick = { onAppend("%") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "^", onClick = { onAppend("^") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Row 1: AC, DEL, +/-, ÷
@@ -141,10 +163,10 @@ private fun BasicKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "AC", onClick = onClear, type = ButtonType.ACTION_CLEAR, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "DEL", onClick = onDelete, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "+/−", onClick = onToggleSign, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "÷", onClick = { onAppend("÷") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = bHeight)
+            CalcButton(text = "AC", onClick = onClear, type = ButtonType.ACTION_CLEAR, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "DEL", onClick = onDelete, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "+/−", onClick = onToggleSign, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "÷", onClick = { onAppend("÷") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Row 2: 7, 8, 9, ×
@@ -152,10 +174,10 @@ private fun BasicKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "7", onClick = { onAppend("7") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "8", onClick = { onAppend("8") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "9", onClick = { onAppend("9") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "×", onClick = { onAppend("×") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = bHeight)
+            CalcButton(text = "7", onClick = { onAppend("7") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "8", onClick = { onAppend("8") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "9", onClick = { onAppend("9") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "×", onClick = { onAppend("×") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Row 3: 4, 5, 6, −
@@ -163,10 +185,10 @@ private fun BasicKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "4", onClick = { onAppend("4") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "5", onClick = { onAppend("5") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "6", onClick = { onAppend("6") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "−", onClick = { onAppend("−") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = bHeight)
+            CalcButton(text = "4", onClick = { onAppend("4") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "5", onClick = { onAppend("5") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "6", onClick = { onAppend("6") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "−", onClick = { onAppend("−") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Row 4: 1, 2, 3, +
@@ -174,10 +196,10 @@ private fun BasicKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "1", onClick = { onAppend("1") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "2", onClick = { onAppend("2") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "3", onClick = { onAppend("3") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "+", onClick = { onAppend("+") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = bHeight)
+            CalcButton(text = "1", onClick = { onAppend("1") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "2", onClick = { onAppend("2") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "3", onClick = { onAppend("3") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "+", onClick = { onAppend("+") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Row 5: 0, ., =
@@ -185,9 +207,9 @@ private fun BasicKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "0", onClick = { onAppend("0") }, type = ButtonType.NUMBER, modifier = Modifier.weight(2f), height = bHeight)
-            CalcButton(text = ".", onClick = { onAppend(".") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = bHeight)
-            CalcButton(text = "=", onClick = onEquals, type = ButtonType.EQUALS, modifier = Modifier.weight(1f), height = bHeight)
+            CalcButton(text = "0", onClick = { onAppend("0") }, type = ButtonType.NUMBER, modifier = Modifier.weight(2f), height = buttonHeight)
+            CalcButton(text = ".", onClick = { onAppend(".") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "=", onClick = onEquals, type = ButtonType.EQUALS, modifier = Modifier.weight(1f), height = buttonHeight)
         }
     }
 }
@@ -202,9 +224,9 @@ private fun ScientificKeypadGrid(
     onMemoryClear: () -> Unit,
     onMemoryRecall: () -> Unit,
     onMemoryAdd: () -> Unit,
-    onMemorySubtract: () -> Unit
+    onMemorySubtract: () -> Unit,
+    buttonHeight: Dp
 ) {
-    val sHeight = 35.dp
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.fillMaxWidth()
@@ -214,11 +236,11 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "MC", onClick = onMemoryClear, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "MR", onClick = onMemoryRecall, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "M+", onClick = onMemoryAdd, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "M−", onClick = onMemorySubtract, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "AC", onClick = onClear, type = ButtonType.ACTION_CLEAR, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "MC", onClick = onMemoryClear, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "MR", onClick = onMemoryRecall, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "M+", onClick = onMemoryAdd, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "M−", onClick = onMemorySubtract, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "AC", onClick = onClear, type = ButtonType.ACTION_CLEAR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Trig Row 1
@@ -226,11 +248,11 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "sin", onClick = { onAppendFunction("sin") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "cos", onClick = { onAppendFunction("cos") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "tan", onClick = { onAppendFunction("tan") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "π", onClick = { onAppend("π") }, type = ButtonType.CONSTANT, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "DEL", onClick = onDelete, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "sin", onClick = { onAppendFunction("sin") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "cos", onClick = { onAppendFunction("cos") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "tan", onClick = { onAppendFunction("tan") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "π", onClick = { onAppend("π") }, type = ButtonType.CONSTANT, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "DEL", onClick = onDelete, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Trig Row 2 (Inverse)
@@ -238,11 +260,11 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "asin", onClick = { onAppendFunction("asin") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "acos", onClick = { onAppendFunction("acos") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "atan", onClick = { onAppendFunction("atan") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "e", onClick = { onAppend("e") }, type = ButtonType.CONSTANT, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "÷", onClick = { onAppend("÷") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "asin", onClick = { onAppendFunction("asin") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "acos", onClick = { onAppendFunction("acos") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "atan", onClick = { onAppendFunction("atan") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "e", onClick = { onAppend("e") }, type = ButtonType.CONSTANT, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "÷", onClick = { onAppend("÷") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Hyperbolic & Logs
@@ -250,11 +272,11 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "sinh", onClick = { onAppendFunction("sinh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "cosh", onClick = { onAppendFunction("cosh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "tanh", onClick = { onAppendFunction("tanh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "log", onClick = { onAppendFunction("log") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "×", onClick = { onAppend("×") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "sinh", onClick = { onAppendFunction("sinh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "cosh", onClick = { onAppendFunction("cosh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "tanh", onClick = { onAppendFunction("tanh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "log", onClick = { onAppendFunction("log") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "×", onClick = { onAppend("×") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Exponentials, Powers & Roots
@@ -262,11 +284,11 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "ln", onClick = { onAppendFunction("ln") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "√x", onClick = { onAppendFunction("sqrt") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "x²", onClick = { onAppend("^2") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "xʸ", onClick = { onAppend("^") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "−", onClick = { onAppend("−") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "ln", onClick = { onAppendFunction("ln") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "√x", onClick = { onAppendFunction("sqrt") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "x²", onClick = { onAppend("^2") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "xʸ", onClick = { onAppend("^") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "−", onClick = { onAppend("−") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Additional Math: Factorial, Abs, Reciprocal, Round
@@ -274,11 +296,11 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "n!", onClick = { onAppend("!") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "|x|", onClick = { onAppendFunction("abs") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "1/x", onClick = { onAppend("1÷(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "round", onClick = { onAppendFunction("round") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "+", onClick = { onAppend("+") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "n!", onClick = { onAppend("!") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "|x|", onClick = { onAppendFunction("abs") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "1/x", onClick = { onAppend("1÷(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "round", onClick = { onAppendFunction("round") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "+", onClick = { onAppend("+") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
         }
 
         // Quick number & equals row
@@ -286,11 +308,96 @@ private fun ScientificKeypadGrid(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            CalcButton(text = "(", onClick = { onAppend("(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = ")", onClick = { onAppend(")") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "0", onClick = { onAppend("0") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = ".", onClick = { onAppend(".") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = sHeight)
-            CalcButton(text = "=", onClick = onEquals, type = ButtonType.EQUALS, modifier = Modifier.weight(1f), height = sHeight)
+            CalcButton(text = "(", onClick = { onAppend("(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = ")", onClick = { onAppend(")") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "0", onClick = { onAppend("0") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = ".", onClick = { onAppend(".") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "=", onClick = onEquals, type = ButtonType.EQUALS, modifier = Modifier.weight(1f), height = buttonHeight)
+        }
+    }
+}
+
+@Composable
+private fun WideKeypadGrid(
+    onAppend: (String) -> Unit,
+    onAppendFunction: (String) -> Unit,
+    onDelete: () -> Unit,
+    onClear: () -> Unit,
+    onToggleSign: () -> Unit,
+    onEquals: () -> Unit,
+    onMemoryClear: () -> Unit,
+    onMemoryRecall: () -> Unit,
+    onMemoryAdd: () -> Unit,
+    onMemorySubtract: () -> Unit,
+    buttonHeight: Dp
+) {
+    // 5 Rows x 9 Columns layout for landscape / tablets
+    Column(
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Row 1: Memory & Clear / Quick ops
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            CalcButton(text = "MC", onClick = onMemoryClear, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "MR", onClick = onMemoryRecall, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "M+", onClick = onMemoryAdd, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "M−", onClick = onMemorySubtract, type = ButtonType.MEMORY, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "(", onClick = { onAppend("(") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = ")", onClick = { onAppend(")") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "AC", onClick = onClear, type = ButtonType.ACTION_CLEAR, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "DEL", onClick = onDelete, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "÷", onClick = { onAppend("÷") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
+        }
+
+        // Row 2: Trig & 7, 8, 9, *
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            CalcButton(text = "sin", onClick = { onAppendFunction("sin") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "cos", onClick = { onAppendFunction("cos") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "tan", onClick = { onAppendFunction("tan") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "π", onClick = { onAppend("π") }, type = ButtonType.CONSTANT, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "e", onClick = { onAppend("e") }, type = ButtonType.CONSTANT, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "7", onClick = { onAppend("7") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "8", onClick = { onAppend("8") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "9", onClick = { onAppend("9") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "×", onClick = { onAppend("×") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
+        }
+
+        // Row 3: Inverse Trig & 4, 5, 6, -
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            CalcButton(text = "asin", onClick = { onAppendFunction("asin") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "acos", onClick = { onAppendFunction("acos") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "atan", onClick = { onAppendFunction("atan") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "ln", onClick = { onAppendFunction("ln") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "log", onClick = { onAppendFunction("log") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "4", onClick = { onAppend("4") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "5", onClick = { onAppend("5") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "6", onClick = { onAppend("6") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "−", onClick = { onAppend("−") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
+        }
+
+        // Row 4: Hyperbolic, Powers & 1, 2, 3, +
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            CalcButton(text = "sinh", onClick = { onAppendFunction("sinh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "cosh", onClick = { onAppendFunction("cosh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "tanh", onClick = { onAppendFunction("tanh") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "√x", onClick = { onAppendFunction("sqrt") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "xʸ", onClick = { onAppend("^") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "1", onClick = { onAppend("1") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "2", onClick = { onAppend("2") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "3", onClick = { onAppend("3") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "+", onClick = { onAppend("+") }, type = ButtonType.OPERATOR, modifier = Modifier.weight(1f), height = buttonHeight)
+        }
+
+        // Row 5: Math Extras & 0, ., +/-, =
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+            CalcButton(text = "n!", onClick = { onAppend("!") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "|x|", onClick = { onAppendFunction("abs") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "%", onClick = { onAppend("%") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "x²", onClick = { onAppend("^2") }, type = ButtonType.FUNCTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "+/−", onClick = onToggleSign, type = ButtonType.ACTION, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "0", onClick = { onAppend("0") }, type = ButtonType.NUMBER, modifier = Modifier.weight(2f), height = buttonHeight)
+            CalcButton(text = ".", onClick = { onAppend(".") }, type = ButtonType.NUMBER, modifier = Modifier.weight(1f), height = buttonHeight)
+            CalcButton(text = "=", onClick = onEquals, type = ButtonType.EQUALS, modifier = Modifier.weight(1f), height = buttonHeight)
         }
     }
 }
@@ -312,7 +419,7 @@ fun CalcButton(
     onClick: () -> Unit,
     type: ButtonType,
     modifier: Modifier = Modifier,
-    height: androidx.compose.ui.unit.Dp = 46.dp
+    height: Dp = 46.dp
 ) {
     val bgColor = when (type) {
         ButtonType.NUMBER -> DarkGrey
@@ -339,7 +446,7 @@ fun CalcButton(
     Box(
         modifier = modifier
             .height(height)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
             .clickable(onClick = onClick)
             .testTag("btn_$text"),
