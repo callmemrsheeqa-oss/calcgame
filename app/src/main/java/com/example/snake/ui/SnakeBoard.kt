@@ -57,10 +57,7 @@ fun SnakeBoard(
             modifier = Modifier
                 .size(boardW, boardH)
                 .clip(RoundedCornerShape(16.dp))
-                .background(DeepCharcoal)
-                .clickable(enabled = gameState.status == GameStatus.IDLE || gameState.status == GameStatus.PAUSED) {
-                    onStartGame()
-                },
+                .background(DeepCharcoal),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {

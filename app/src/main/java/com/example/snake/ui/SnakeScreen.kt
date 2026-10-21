@@ -30,7 +30,6 @@ import com.example.snake.model.GameStatus
 import com.example.snake.model.SnakeDirection
 import com.example.ui.theme.*
 import kotlin.math.abs
-import kotlin.math.sqrt
 
 @Composable
 fun SnakeScreen(
@@ -42,7 +41,9 @@ fun SnakeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val density = LocalDensity.current
-    val minSwipeDistancePx = with(density) { 16.dp.toPx() }
+    val swipeThresholdPx = with(density) { 14.dp.toPx() }
+
+    var showJoystick by remember { mutableStateOf(false) }
 
     // Automatic Landscape on entering Snake Game, restore Portrait on exit
     DisposableEffect(Unit) {
@@ -60,68 +61,15 @@ fun SnakeScreen(
         viewModel.startGame()
     }
 
-    // Full screen container with swipe & tap detection everywhere
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(DeepCharcoal)
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val startPos = down.position
-                    var registeredDirection = false
-
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-
-                        if (change.pressed) {
-                            val currentPos = change.position
-                            val dx = currentPos.x - startPos.x
-                            val dy = currentPos.y - startPos.y
-                            val dist = sqrt(dx * dx + dy * dy)
-
-                            // Swipe / Drag detection in any direction
-                            if (!registeredDirection && dist >= minSwipeDistancePx) {
-                                registeredDirection = true
-                                change.consume()
-
-                                // If dragging up to down (dy > 0) -> DOWN
-                                // If dragging down to up (dy < 0) -> UP
-                                // If dragging left to right (dx > 0) -> RIGHT
-                                // If dragging right to left (dx < 0) -> LEFT
-                                val dir = if (abs(dx) > abs(dy)) {
-                                    if (dx > 0) SnakeDirection.RIGHT else SnakeDirection.LEFT
-                                } else {
-                                    if (dy > 0) SnakeDirection.DOWN else SnakeDirection.UP
-                                }
-                                viewModel.queueDirection(dir)
-                            }
-                        } else {
-                            // Touch released without major swipe: Treat as Click / Tap
-                            if (!registeredDirection) {
-                                val centerX = size.width / 2f
-                                val centerY = size.height / 2f
-                                val dx = startPos.x - centerX
-                                val dy = startPos.y - centerY
-
-                                val dir = if (abs(dx) > abs(dy)) {
-                                    if (dx > 0) SnakeDirection.RIGHT else SnakeDirection.LEFT
-                                } else {
-                                    if (dy > 0) SnakeDirection.DOWN else SnakeDirection.UP
-                                }
-                                viewModel.queueDirection(dir)
-                            }
-                            break
-                        }
-                    }
-                }
-            }
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -138,7 +86,7 @@ fun SnakeScreen(
                     onClick = onNavigateToCalculator,
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryYellow),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                     modifier = Modifier
                         .height(34.dp)
                         .testTag("btn_back_to_calculator")
@@ -148,7 +96,7 @@ fun SnakeScreen(
                         contentDescription = "Back",
                         modifier = Modifier.size(14.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.Calculate,
                         contentDescription = null,
@@ -161,31 +109,46 @@ fun SnakeScreen(
                 // Scores & Controls
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Score
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = DarkGrey,
-                        modifier = Modifier.padding(horizontal = 4.dp)
+                        modifier = Modifier.padding(horizontal = 2.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("SCORE: ", color = LightGrey, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                Text("${state.score}", color = PrimaryYellow, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                                Text("${state.score}", color = PrimaryYellow, fontSize = 15.sp, fontWeight = FontWeight.Black)
                             }
                             Text("|", color = MidGrey)
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = SecondaryYellow, modifier = Modifier.size(12.dp))
                                 Spacer(modifier = Modifier.width(3.dp))
                                 Text("BEST: ", color = LightGrey, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                Text("${state.highScore}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                Text("${state.highScore}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                             }
                         }
+                    }
+
+                    // Joystick Toggle Button
+                    OutlinedButton(
+                        onClick = { showJoystick = !showJoystick },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (showJoystick) PrimaryYellow else LightGrey
+                        ),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.height(34.dp).testTag("btn_toggle_joystick")
+                    ) {
+                        Icon(Icons.Default.SportsEsports, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (showJoystick) "Hide Stick" else "Joystick", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
 
                     // Action Button
@@ -259,11 +222,68 @@ fun SnakeScreen(
                 }
             }
 
-            // CENTER: EXPANSIVE BORDERLESS CONTINUOUS SNAKE BOARD
+            // CENTER: EXPANSIVE BORDERLESS CONTINUOUS SNAKE BOARD WITH FULL GESTURE CAPTURE
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val startPos = down.position
+                            var currentAccumX = 0f
+                            var currentAccumY = 0f
+                            var hasSwiped = false
+
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+
+                                if (change.pressed) {
+                                    val delta = change.position - change.previousPosition
+                                    currentAccumX += delta.x
+                                    currentAccumY += delta.y
+
+                                    val absAccumX = abs(currentAccumX)
+                                    val absAccumY = abs(currentAccumY)
+
+                                    if (absAccumX >= swipeThresholdPx || absAccumY >= swipeThresholdPx) {
+                                        hasSwiped = true
+                                        change.consume()
+                                        val dir = if (absAccumX > absAccumY) {
+                                            if (currentAccumX > 0f) SnakeDirection.RIGHT else SnakeDirection.LEFT
+                                        } else {
+                                            if (currentAccumY > 0f) SnakeDirection.DOWN else SnakeDirection.UP
+                                        }
+                                        viewModel.queueDirection(dir, fromTouch = true)
+                                        currentAccumX = 0f
+                                        currentAccumY = 0f
+                                    }
+                                } else {
+                                    // Pointer released
+                                    if (!hasSwiped) {
+                                        if (state.status == GameStatus.IDLE) {
+                                            viewModel.startGame()
+                                        } else if (state.status == GameStatus.PAUSED) {
+                                            viewModel.resumeGame()
+                                        } else if (state.status == GameStatus.RUNNING) {
+                                            val centerX = size.width / 2f
+                                            val centerY = size.height / 2f
+                                            val dx = startPos.x - centerX
+                                            val dy = startPos.y - centerY
+                                            val dir = if (abs(dx) > abs(dy)) {
+                                                if (dx > 0) SnakeDirection.RIGHT else SnakeDirection.LEFT
+                                            } else {
+                                                if (dy > 0) SnakeDirection.DOWN else SnakeDirection.UP
+                                            }
+                                            viewModel.queueDirection(dir, fromTouch = true)
+                                        }
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 SnakeBoard(
@@ -271,11 +291,28 @@ fun SnakeScreen(
                     onStartGame = { ensureLandscapeAndStart() },
                     modifier = Modifier.fillMaxSize()
                 )
+
+                // Optional floating Virtual Joystick on the right side
+                if (showJoystick) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 16.dp, bottom = 8.dp)
+                    ) {
+                        VirtualJoystick(
+                            onDirectionChange = { dir ->
+                                viewModel.queueDirection(dir, fromTouch = true)
+                            },
+                            baseSize = 110,
+                            knobSize = 46
+                        )
+                    }
+                }
             }
 
             // BOTTOM HELPER HINT
             Text(
-                text = "Swipe in any direction or click anywhere to steer • Snake wraps through edges",
+                text = "Swipe anywhere on screen to steer • Snake wraps across edges",
                 color = LightGrey.copy(alpha = 0.7f),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,

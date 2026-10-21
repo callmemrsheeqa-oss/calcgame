@@ -44,9 +44,9 @@ fun CalculatorDisplay(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(DarkGrey)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         // Status Row (DEG/RAD toggle, Memory badge, History button)
@@ -62,32 +62,32 @@ fun CalculatorDisplay(
                 // Angle Mode Pill
                 Surface(
                     onClick = onToggleAngleMode,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     color = PrimaryYellow.copy(alpha = 0.18f),
                     modifier = Modifier.testTag("angle_mode_toggle")
                 ) {
                     Text(
                         text = if (state.angleMode == AngleMode.DEG) "DEG" else "RAD",
                         color = PrimaryYellow,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
                 // Memory Active Badge
                 if (state.memoryValue != null) {
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = Color(0xFF0A84FF).copy(alpha = 0.2f),
                         modifier = Modifier.testTag("memory_badge")
                     ) {
                         Text(
                             text = "M",
                             color = Color(0xFF0A84FF),
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -96,17 +96,20 @@ fun CalculatorDisplay(
             // History Button
             IconButton(
                 onClick = onOpenHistory,
-                modifier = Modifier.testTag("btn_history")
+                modifier = Modifier
+                    .size(36.dp)
+                    .testTag("btn_history")
             ) {
                 Icon(
                     imageVector = Icons.Default.History,
                     contentDescription = "Calculation History",
-                    tint = PrimaryYellow
+                    tint = PrimaryYellow,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         // Expression Display
         Box(
@@ -118,7 +121,7 @@ fun CalculatorDisplay(
             Text(
                 text = if (state.expression.isEmpty()) "0" else state.expression,
                 color = if (state.expression.isEmpty()) LightGrey else Color.White,
-                fontSize = if (state.expression.length > 18) 22.sp else 30.sp,
+                fontSize = if (state.expression.length > 18) 20.sp else 26.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.End,
@@ -127,7 +130,7 @@ fun CalculatorDisplay(
             )
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Result or Error Display
         Box(
@@ -139,7 +142,7 @@ fun CalculatorDisplay(
                     Text(
                         text = state.error,
                         color = SnakeRed,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.End,
                         modifier = Modifier.testTag("calculator_error")
@@ -149,7 +152,7 @@ fun CalculatorDisplay(
                     Text(
                         text = if (state.isEvaluated) "= ${state.previewResult}" else state.previewResult,
                         color = if (state.isEvaluated) PrimaryYellow else LightGrey,
-                        fontSize = if (state.isEvaluated) 38.sp else 24.sp,
+                        fontSize = if (state.isEvaluated) 32.sp else 22.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.End,
                         maxLines = 1,
@@ -159,7 +162,7 @@ fun CalculatorDisplay(
                 else -> {
                     Text(
                         text = " ",
-                        fontSize = 24.sp
+                        fontSize = 22.sp
                     )
                 }
             }

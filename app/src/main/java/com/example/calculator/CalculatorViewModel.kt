@@ -141,7 +141,7 @@ class CalculatorViewModel(
         } else if (expr.endsWith("+")) {
             expr = expr.dropLast(1) + "−"
         } else {
-            expr += "×(–1)"
+            expr += "×(-1)"
         }
         updateExpression(expr)
     }

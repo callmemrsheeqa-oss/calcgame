@@ -1,6 +1,8 @@
 package com.example.calculator.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,37 +16,39 @@ fun CalculatorScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showHistory by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize()
     ) {
-        // Display area
-        CalculatorDisplay(
-            state = state,
-            onToggleAngleMode = { viewModel.toggleAngleMode() },
-            onOpenHistory = { showHistory = true },
-            modifier = Modifier.weight(0.35f, fill = false)
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 14.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Display area
+            CalculatorDisplay(
+                state = state,
+                onToggleAngleMode = { viewModel.toggleAngleMode() },
+                onOpenHistory = { showHistory = true }
+            )
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Keypad area
-        CalculatorKeypad(
-            onAppend = { viewModel.onAppend(it) },
-            onAppendFunction = { viewModel.onAppendFunction(it) },
-            onDelete = { viewModel.onDelete() },
-            onClear = { viewModel.onClear() },
-            onToggleSign = { viewModel.onToggleSign() },
-            onEquals = { viewModel.onEquals() },
-            onMemoryClear = { viewModel.onMemoryClear() },
-            onMemoryRecall = { viewModel.onMemoryRecall() },
-            onMemoryAdd = { viewModel.onMemoryAdd() },
-            onMemorySubtract = { viewModel.onMemorySubtract() },
-            modifier = Modifier.weight(0.65f, fill = false)
-        )
+            // Keypad area
+            CalculatorKeypad(
+                onAppend = { viewModel.onAppend(it) },
+                onAppendFunction = { viewModel.onAppendFunction(it) },
+                onDelete = { viewModel.onDelete() },
+                onClear = { viewModel.onClear() },
+                onToggleSign = { viewModel.onToggleSign() },
+                onEquals = { viewModel.onEquals() },
+                onMemoryClear = { viewModel.onMemoryClear() },
+                onMemoryRecall = { viewModel.onMemoryRecall() },
+                onMemoryAdd = { viewModel.onMemoryAdd() },
+                onMemorySubtract = { viewModel.onMemorySubtract() }
+            )
+        }
     }
 
     if (showHistory) {

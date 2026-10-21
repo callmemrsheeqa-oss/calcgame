@@ -54,14 +54,23 @@ class ExpressionEvaluator {
     }
 
     private fun sanitize(expr: String): String {
-        return expr
+        var s = expr
             .replace("×", "*")
             .replace("÷", "/")
             .replace("−", "-")
+            .replace("–", "-")
+            .replace("—", "-")
             .replace("π", "PI")
             .replace("√", "sqrt")
             .replace("∛", "cbrt")
             .replace(" ", "")
+
+        val openCount = s.count { it == '(' }
+        val closeCount = s.count { it == ')' }
+        if (openCount > closeCount) {
+            s += ")".repeat(openCount - closeCount)
+        }
+        return s
     }
 
     private fun tokenize(input: String): List<Token> {

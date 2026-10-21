@@ -44,6 +44,7 @@ class SnakeViewModel(
 
     private var nextDirection: SnakeDirection = SnakeDirection.RIGHT
     private var gameLoopJob: Job? = null
+    private var lastTouchInputTime: Long = 0L
 
     init {
         // Synchronize settings
@@ -55,16 +56,22 @@ class SnakeViewModel(
                 motionSensorManager.invertDirection = settings.invertTiltDirection
                 soundManager.isEnabled = settings.soundEnabled
                 hapticManager.isEnabled = settings.vibrationEnabled
+                if (!settings.motionControlsEnabled) {
+                    motionSensorManager.stopListening()
+                }
             }
         }
 
-        // Listen to tilt telemetry for motion steering
+        // Listen to tilt telemetry for motion steering ONLY if motion is enabled and no recent touch input
         viewModelScope.launch {
             telemetry.collect { telem ->
-                if (_state.value.status == GameStatus.RUNNING && settingsManager.settings.value.motionControlsEnabled) {
+                val now = System.currentTimeMillis()
+                val isMotionActive = settingsManager.settings.value.motionControlsEnabled
+                val touchCooldownPassed = (now - lastTouchInputTime) > 3000L
+                if (_state.value.status == GameStatus.RUNNING && isMotionActive && touchCooldownPassed) {
                     val tiltDir = telem.activeDirection
                     if (tiltDir != null) {
-                        queueDirection(tiltDir)
+                        queueDirection(tiltDir, fromTouch = false)
                     }
                 }
             }
@@ -95,7 +102,9 @@ class SnakeViewModel(
             status = GameStatus.RUNNING,
             foodsEaten = 0
         )
-        motionSensorManager.startListening()
+        if (settingsManager.settings.value.motionControlsEnabled) {
+            motionSensorManager.startListening()
+        }
         startGameLoop()
     }
 
@@ -110,7 +119,9 @@ class SnakeViewModel(
     fun resumeGame() {
         if (_state.value.status == GameStatus.PAUSED) {
             _state.value = _state.value.copy(status = GameStatus.RUNNING)
-            motionSensorManager.startListening()
+            if (settingsManager.settings.value.motionControlsEnabled) {
+                motionSensorManager.startListening()
+            }
             startGameLoop()
         }
     }
@@ -120,7 +131,10 @@ class SnakeViewModel(
         startGame()
     }
 
-    fun queueDirection(newDir: SnakeDirection) {
+    fun queueDirection(newDir: SnakeDirection, fromTouch: Boolean = true) {
+        if (fromTouch) {
+            lastTouchInputTime = System.currentTimeMillis()
+        }
         if (_state.value.status == GameStatus.IDLE) {
             startGame()
         }
@@ -128,7 +142,7 @@ class SnakeViewModel(
 
         val currentDir = _state.value.direction
         // Prevent reversing directly into own body
-        if (!currentDir.isOpposite(newDir) && !nextDirection.isOpposite(newDir)) {
+        if (!currentDir.isOpposite(newDir)) {
             nextDirection = newDir
         }
     }

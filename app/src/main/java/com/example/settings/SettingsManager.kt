@@ -23,7 +23,7 @@ enum class GameSpeed(val displayName: String, val tickIntervalMs: Long) {
 }
 
 data class AppSettings(
-    val motionControlsEnabled: Boolean = true,
+    val motionControlsEnabled: Boolean = false,
     val tiltSensitivity: TiltSensitivity = TiltSensitivity.MEDIUM,
     val gameSpeed: GameSpeed = GameSpeed.NORMAL,
     val soundEnabled: Boolean = true,
@@ -43,7 +43,7 @@ class SettingsManager(context: Context) {
     val history: StateFlow<List<CalculationHistoryItem>> = _history.asStateFlow()
 
     private fun loadSettings(): AppSettings {
-        val motion = prefs.getBoolean("motion_controls", true)
+        val motion = prefs.getBoolean("motion_controls", false)
         val sensitivityStr = prefs.getString("tilt_sensitivity", TiltSensitivity.MEDIUM.name) ?: TiltSensitivity.MEDIUM.name
         val sensitivity = try { TiltSensitivity.valueOf(sensitivityStr) } catch (_: Exception) { TiltSensitivity.MEDIUM }
         val speedStr = prefs.getString("game_speed", GameSpeed.NORMAL.name) ?: GameSpeed.NORMAL.name
